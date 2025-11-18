@@ -808,7 +808,7 @@
         }
 
         // Stop game music
-        const gameMusic = document.getElementById('bgMusic');
+        const gameMusic = document.getElementById('gameMusic');
         if (gameMusic) {
           try {
             gameMusic.pause();
@@ -1157,7 +1157,7 @@
         playSound('castSound', CAST_VOLUME);
 
         // Start game music
-        const gameMusic = document.getElementById('bgMusic');
+        const gameMusic = document.getElementById('gameMusic');
         if (gameMusic) {
           try {
             gameMusic.currentTime = 0;
@@ -1263,6 +1263,7 @@
   </script>
 
   <audio id="bgMusic" src="good-night-lofi-cozy-chill-music-160166.mp3" loop preload="auto"></audio>
+  <audio id="gameMusic" src="game-music.mp3" loop preload="auto"></audio>
   <audio id="castSound" src="cast.mp3" preload="auto"></audio>
   <audio id="catchSound" src="catch.mp3" preload="auto"></audio>
   <audio id="escapeSound" src="escape.mp3" preload="auto"></audio>
