@@ -807,6 +807,17 @@
           }
         }
 
+        // Stop game music
+        const gameMusic = document.getElementById('bgMusic');
+        if (gameMusic) {
+          try {
+            gameMusic.pause();
+            gameMusic.currentTime = 0;
+          } catch (e) {
+            console.warn('Error stopping game music:', e);
+          }
+        }
+
         // Update high score one final time
         updateHighScore();
 
@@ -1144,6 +1155,19 @@
 
         // Play cast sound
         playSound('castSound', CAST_VOLUME);
+
+        // Start game music
+        const gameMusic = document.getElementById('bgMusic');
+        if (gameMusic) {
+          try {
+            gameMusic.currentTime = 0;
+            gameMusic.play().catch(() => {
+              // Silently handle autoplay restrictions
+            });
+          } catch (e) {
+            console.warn('Error starting game music:', e);
+          }
+        }
 
         // Update UI
         if (startButton) {
