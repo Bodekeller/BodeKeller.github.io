@@ -47,6 +47,8 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Robo
   margin: 0.25rem 0 1rem 0;
 }
 
+/* Adding comment to fix pages */
+
 .experience ul, .education ul, .skills ul, .languages ul {
   list-style-type: none;
   padding-left: 0;
