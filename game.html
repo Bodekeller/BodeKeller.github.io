@@ -1,0 +1,1259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bode Keller — Fishing Game</title>
+  <meta name="description" content="Play a fun fishing minigame! Keep the bobber aligned with the fish to fill the catch meter and score points.">
+  <link rel="canonical" href="https://bodekeller.github.io/game.html">
+  <meta property="og:title" content="Bode Keller — Fishing Game">
+  <meta property="og:description" content="Play a fun fishing minigame! Keep the bobber aligned with the fish to fill the catch meter and score points.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bodekeller.github.io/game.html">
+  <meta property="og:image" content="https://bodekeller.github.io/photos/portrait.jpeg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bode Keller — Fishing Game">
+  <meta name="twitter:description" content="Play a fun fishing minigame! Keep the bobber aligned with the fish to fill the catch meter and score points.">
+  <meta name="twitter:image" content="https://bodekeller.github.io/photos/portrait.jpeg">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Game-specific CSS */
+    .game-container {
+      max-width: 840px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    #fishingCanvas {
+      display: block;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      background: linear-gradient(180deg, #87CEEB, #4A90E2);
+      width: 100%;
+      max-width: 800px;
+      height: auto;
+    }
+
+    .game-container > div {
+      position: relative;
+      border: 3px solid var(--accent);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .game-ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .ui-top {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+    }
+
+    .ui-stat {
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .ui-label {
+      color: var(--accent-2);
+      margin-right: 6px;
+    }
+
+    .ui-bottom {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    #startButton {
+      pointer-events: auto;
+      background: linear-gradient(135deg, #FF6B6B, #FFA500);
+      font-size: 20px;
+      padding: 14px 28px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s;
+      border-radius: var(--radius);
+      color: #fff;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
+    #startButton:hover {
+      transform: scale(1.05);
+    }
+
+    #startButton:active {
+      transform: scale(0.98);
+    }
+
+    .instructions-panel {
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 24px;
+      max-width: 840px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .instructions-panel ul {
+      color: var(--muted);
+      line-height: 1.8;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .instructions-panel li {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .instructions-panel li:before {
+      content: "•";
+      color: var(--accent);
+      position: absolute;
+      left: 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+      #fishingCanvas {
+        width: 100%;
+        height: auto;
+      }
+
+      .ui-stat {
+        font-size: 16px;
+      }
+
+      .ui-top {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .instructions-panel {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="header">
+    <div class="container navbar">
+      <a class="brand" href="/">
+        <img src="photos/portrait.jpeg" alt="Bode Keller">
+        <span>Bode Keller</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="hobbies.html">Hobbies</a>
+        <a href="discover.html">Discover</a>
+        <a href="resume.html">Resume</a>
+        <a href="career.html">Career</a>
+        <a href="game.html" aria-current="page">Game</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" style="display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:8px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="section">
+      <div class="container">
+        <h1>Fishing Minigame</h1>
+        <p>Keep the bobber aligned with the fish to fill the catch meter!</p>
+
+        <div class="game-container">
+          <div>
+            <canvas id="fishingCanvas" width="800" height="600" aria-label="Fishing game canvas">
+              Your browser does not support the canvas element. Please update your browser to play the game.
+            </canvas>
+            <div class="game-ui">
+              <div class="ui-top">
+                <div class="ui-stat" role="status" aria-live="polite" aria-atomic="true">
+                  <span class="ui-label">Score:</span>
+                  <span id="scoreValue">0</span>
+                </div>
+                <div class="ui-stat" role="status" aria-live="polite" aria-atomic="true">
+                  <span class="ui-label">Time:</span>
+                  <span id="timerValue">15</span>s
+                </div>
+                <div class="ui-stat" role="status" aria-live="polite" aria-atomic="true">
+                  <span class="ui-label">Caught:</span>
+                  <span id="fishCount">0</span>
+                </div>
+                <div class="ui-stat" role="status" aria-live="polite" aria-atomic="true">
+                  <span class="ui-label">High Score:</span>
+                  <span id="highScoreValue">0</span>
+                </div>
+                <div class="ui-stat" role="status" aria-live="polite" aria-atomic="true">
+                  <span class="ui-label">Difficulty:</span>
+                  <span id="difficultyValue">1.0x</span>
+                </div>
+              </div>
+              <div class="ui-bottom">
+                <button id="startButton" class="cta primary" aria-label="Start fishing game">Start Fishing!</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="instructions-panel">
+          <h2>How to Play</h2>
+          <ul>
+            <li>Click or hold to raise the bobber, release to let it fall</li>
+            <li>Keep the bobber aligned with the moving fish</li>
+            <li>Fill the catch meter to 100% to catch the fish</li>
+            <li>The catch meter drains when the bobber isn't aligned with the fish</li>
+            <li>If the catch meter empties completely, the game ends</li>
+            <li>Catch as many fish as possible before time runs out</li>
+            <li>Rare fish can add bonus time up to the maximum session length</li>
+            <li>Different fish types award different points</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <span>&copy; <span data-year></span> Bode Keller. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+  <script>
+    (function() {
+      'use strict';
+
+      // Fish Type System with Rarity Tiers
+      const FISH_TYPES = [
+        { name: 'Minnow', rarity: 'common', color: '#4A90E2', accentColor: '#2E5C8A', size: 0.8, baseSpeed: 0.8, pointValue: 50, probability: 40 },
+        { name: 'Bass', rarity: 'uncommon', color: '#2E7D32', accentColor: '#1B5E20', size: 1.0, baseSpeed: 1.0, pointValue: 100, probability: 30 },
+        { name: 'Trout', rarity: 'rare', color: '#1976D2', accentColor: '#0D47A1', size: 1.2, baseSpeed: 1.3, pointValue: 200, probability: 15 },
+        { name: 'Salmon', rarity: 'epic', color: '#FF6F00', accentColor: '#E65100', size: 1.4, baseSpeed: 1.5, pointValue: 400, probability: 10 },
+        { name: 'Marlin', rarity: 'legendary', color: '#FFD700', accentColor: '#FFA000', size: 1.6, baseSpeed: 1.8, pointValue: 800, probability: 4 },
+        { name: 'Golden Koi', rarity: 'mythic', color: '#FFC107', accentColor: '#FF8F00', size: 1.8, baseSpeed: 2.0, pointValue: 1600, probability: 1 }
+      ];
+
+      // Timer Constants
+      const MAX_TIME = 15; // Maximum session length in seconds (intended time limit)
+
+      // Game State Management
+      const gameState = {
+        phase: 'idle', // idle | playing | won | lost
+        bobberY: 300,
+        bobberVelocity: 0,
+        fishY: 250,
+        fishVelocity: 0,
+        fishTargetY: 250,
+        catchMeter: 0,
+        timer: MAX_TIME,
+        score: 0,
+        fishCaught: 0,
+        inputActive: false,
+        difficulty: 1.0,
+        lastFrameTime: 0,
+        fishBurstTimer: 0,
+        currentFish: null,
+        highScore: 0,
+        particles: [],
+        screenShake: 0,
+        reelSoundPlaying: false,
+        catchMeterZeroTimer: 0 // Time in seconds the catch meter has been at 0
+      };
+
+      // Canvas Initialization
+      const canvas = document.getElementById('fishingCanvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      const canvasWidth = 800;
+      const canvasHeight = 600;
+      
+      // Calculate responsive scaling factor
+      const getScaleFactor = () => {
+        const rect = canvas.getBoundingClientRect();
+        return rect.width / canvasWidth;
+      };
+
+      // Physics Constants
+      const GRAVITY = 0.5;
+      const BOBBER_RISE_SPEED = -8;
+      const BOBBER_MIN_Y = 100;
+      const BOBBER_MAX_Y = 500;
+      const FISH_BASE_SPEED = 2;
+      const CATCH_METER_FILL_RATE = 2;
+      const CATCH_METER_DRAIN_RATE = 1;
+      const OVERLAP_THRESHOLD = 40;
+      const FISH_LANE_MIN_Y = 100;
+      const FISH_LANE_MAX_Y = 500;
+
+      // High Score Storage Key
+      const HIGH_SCORE_KEY = 'fishingGameHighScore';
+
+      // Screen Shake Decay Constant
+      const SCREEN_SHAKE_DECAY = 0.9;
+
+      // Difficulty Scaling Constants
+      const DIFFICULTY_PER_CATCH = 0.15; // Increase difficulty by 0.15 per catch
+      const MAX_DIFFICULTY = 3.0; // Cap difficulty at 3.0x
+      const COMMON_PROBABILITY_DIFFICULTY_FACTOR = 0.3; // Factor for common fish probability adjustment
+      const RARE_PROBABILITY_DIFFICULTY_FACTOR = 0.2; // Factor for rare fish probability adjustment
+      const BURST_SPEED_MULTIPLIER = 2; // Multiplier for fish speed during burst behavior
+
+      // Sound Effect Volume Constants
+      const CAST_VOLUME = 0.6; // Volume for cast sound effect
+      const CATCH_VOLUME = 0.7; // Volume for catch sound effect
+      const ESCAPE_VOLUME = 0.5; // Volume for escape sound effect
+      const REEL_VOLUME = 0.4; // Volume for reel sound effect
+
+      // High Score Management Functions
+      const loadHighScore = () => {
+        try {
+          const saved = localStorage.getItem(HIGH_SCORE_KEY);
+          if (saved !== null && !isNaN(Number(saved))) {
+            return parseInt(saved, 10);
+          }
+        } catch (e) {
+          console.warn('Error loading high score from localStorage:', e);
+        }
+        return 0;
+      };
+
+      const saveHighScore = (score) => {
+        try {
+          localStorage.setItem(HIGH_SCORE_KEY, String(score));
+        } catch (e) {
+          if (e.name === 'QuotaExceededError') {
+            console.warn('localStorage quota exceeded. Cannot save high score.');
+          } else {
+            console.warn('Error saving high score to localStorage:', e);
+          }
+        }
+      };
+
+      const updateHighScore = () => {
+        if (gameState.score > gameState.highScore) {
+          gameState.highScore = gameState.score;
+          saveHighScore(gameState.highScore);
+          const highScoreValue = document.getElementById('highScoreValue');
+          if (highScoreValue) {
+            highScoreValue.textContent = gameState.highScore;
+          }
+        }
+      };
+
+      // Particle System Functions
+      const spawnCatchParticles = (x, y, color) => {
+        const particleCount = 15 + Math.floor(Math.random() * 6); // 15-20 particles
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+          const speed = 2 + Math.random() * 4;
+          gameState.particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 30 + Math.floor(Math.random() * 31), // 30-60 frames
+            maxLife: 30 + Math.floor(Math.random() * 31),
+            color: color,
+            size: 3 + Math.random() * 3
+          });
+        }
+      };
+
+      const updateParticles = () => {
+        gameState.particles = gameState.particles.filter(particle => {
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          particle.vy += 0.2; // Gravity
+          particle.life--;
+          return particle.life > 0;
+        });
+      };
+
+      const renderParticles = () => {
+        gameState.particles.forEach(particle => {
+          const alpha = particle.life / particle.maxLife;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = particle.color;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      };
+
+      // Screen Shake Function
+      const applyScreenShake = (intensity) => {
+        gameState.screenShake = intensity;
+      };
+
+      // Rarity Utility Functions
+      const getRarityGlow = (rarity, isOverlapping) => {
+        if (isOverlapping) {
+          return { blur: 15, color: '#FFD700' };
+        }
+        const glowMap = {
+          'uncommon': { blur: 10, color: '#00FF00' },
+          'rare': { blur: 12, color: '#00FFFF' },
+          'epic': { blur: 15, color: '#FF00FF' },
+          'legendary': { blur: 18, color: '#FFD700' },
+          'mythic': { blur: 20, color: '#FFD700' }
+        };
+        return glowMap[rarity] || { blur: 0, color: '#000000' };
+      };
+
+      const getRarityTextColor = (rarity) => {
+        const colorMap = {
+          'uncommon': '#00FF00',
+          'rare': '#00FFFF',
+          'epic': '#FF00FF',
+          'legendary': '#FFD700',
+          'mythic': null // Special case: uses gradient
+        };
+        return colorMap[rarity] || '#FFFFFF';
+      };
+
+      const createMythicGradient = (ctx, x1, y1, x2, y2) => {
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, '#FF0000');
+        gradient.addColorStop(0.17, '#FF7F00');
+        gradient.addColorStop(0.33, '#FFFF00');
+        gradient.addColorStop(0.5, '#00FF00');
+        gradient.addColorStop(0.67, '#0000FF');
+        gradient.addColorStop(0.83, '#4B0082');
+        gradient.addColorStop(1, '#9400D3');
+        return gradient;
+      };
+
+      const getCatchMeterGradient = (ctx, rarity, meterX, meterY, meterHeight, fillHeight) => {
+        const gradient = ctx.createLinearGradient(meterX, meterY + meterHeight - fillHeight, meterX, meterY + meterHeight);
+        const gradientMap = {
+          'common': [
+            { stop: 0, color: '#ADFF2F' },
+            { stop: 1, color: '#9ACD32' }
+          ],
+          'uncommon': [
+            { stop: 0, color: '#00FF7F' },
+            { stop: 1, color: '#00CED1' }
+          ],
+          'rare': [
+            { stop: 0, color: '#00FFFF' },
+            { stop: 1, color: '#4169E1' }
+          ],
+          'epic': [
+            { stop: 0, color: '#4169E1' },
+            { stop: 1, color: '#9370DB' }
+          ],
+          'legendary': [
+            { stop: 0, color: '#9370DB' },
+            { stop: 1, color: '#FFD700' }
+          ],
+          'mythic': [
+            { stop: 0, color: '#FF0000' },
+            { stop: 0.17, color: '#FF7F00' },
+            { stop: 0.33, color: '#FFFF00' },
+            { stop: 0.5, color: '#00FF00' },
+            { stop: 0.67, color: '#0000FF' },
+            { stop: 0.83, color: '#4B0082' },
+            { stop: 1, color: '#9400D3' }
+          ]
+        };
+
+        const stops = gradientMap[rarity] || [
+          { stop: 0, color: '#FFFF00' },
+          { stop: 1, color: '#00FF00' }
+        ];
+
+        stops.forEach(({ stop, color }) => {
+          gradient.addColorStop(stop, color);
+        });
+
+        return gradient;
+      };
+
+      // Sound Management Function
+      const playSound = (audioId, volume = 1.0) => {
+        try {
+          const audio = document.getElementById(audioId);
+          if (!audio) {
+            console.warn(`Audio element with id "${audioId}" not found. Sound effect will not play.`);
+            return;
+          }
+          audio.volume = Math.max(0, Math.min(1, volume));
+          audio.currentTime = 0;
+          audio.play().catch(() => {
+            // Silently handle autoplay restrictions
+          });
+        } catch (e) {
+          console.warn('Error playing sound:', e);
+        }
+      };
+
+      // Fish Selection Function (Weighted Random)
+      const selectRandomFish = () => {
+        // Adjust probabilities based on difficulty
+        const adjustedTypes = FISH_TYPES.map(fish => {
+          const adjustedProbability = fish.probability * (fish.rarity === 'common' ? (2 - gameState.difficulty * COMMON_PROBABILITY_DIFFICULTY_FACTOR) : (1 + gameState.difficulty * RARE_PROBABILITY_DIFFICULTY_FACTOR));
+          return { ...fish, adjustedProbability };
+        });
+
+        // Normalize probabilities to sum to 100
+        const totalProbability = adjustedTypes.reduce((sum, fish) => sum + fish.adjustedProbability, 0);
+        adjustedTypes.forEach(fish => {
+          fish.normalizedProbability = (fish.adjustedProbability / totalProbability) * 100;
+        });
+
+        // Weighted random selection using cumulative probability ranges
+        const random = Math.random() * 100;
+        let cumulative = 0;
+        
+        for (const fish of adjustedTypes) {
+          cumulative += fish.normalizedProbability;
+          if (random <= cumulative) {
+            return fish;
+          }
+        }
+
+        // Fallback to common fish if something goes wrong
+        return adjustedTypes[0];
+      };
+
+      // DOM Elements
+      const startButton = document.getElementById('startButton');
+      const scoreValue = document.getElementById('scoreValue');
+      const timerValue = document.getElementById('timerValue');
+      const fishCount = document.getElementById('fishCount');
+
+      // Input Handling
+      let animationId = null;
+
+      const handleInputStart = (e) => {
+        if (e.type === 'touchstart') {
+          e.preventDefault();
+        }
+        gameState.inputActive = true;
+      };
+
+      const handleInputEnd = (e) => {
+        if (e.type === 'touchend') {
+          e.preventDefault();
+        }
+        gameState.inputActive = false;
+      };
+
+      const handleKeyDown = (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+          e.preventDefault();
+          gameState.inputActive = true;
+        }
+      };
+
+      const handleKeyUp = (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+          e.preventDefault();
+          gameState.inputActive = false;
+        }
+      };
+
+      const setupInputListeners = () => {
+        canvas.addEventListener('mousedown', handleInputStart);
+        canvas.addEventListener('mouseup', handleInputEnd);
+        canvas.addEventListener('mouseleave', handleInputEnd);
+        canvas.addEventListener('touchstart', handleInputStart, { passive: false });
+        canvas.addEventListener('touchend', handleInputEnd, { passive: false });
+        canvas.addEventListener('touchcancel', handleInputEnd, { passive: false });
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+      };
+
+      const removeInputListeners = () => {
+        canvas.removeEventListener('mousedown', handleInputStart);
+        canvas.removeEventListener('mouseup', handleInputEnd);
+        canvas.removeEventListener('mouseleave', handleInputEnd);
+        canvas.removeEventListener('touchstart', handleInputStart);
+        canvas.removeEventListener('touchend', handleInputEnd);
+        canvas.removeEventListener('touchcancel', handleInputEnd);
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+      };
+
+      // Bobber Physics Update Function
+      const updateBobber = () => {
+        if (gameState.inputActive) {
+          gameState.bobberVelocity = BOBBER_RISE_SPEED;
+        } else {
+          gameState.bobberVelocity += GRAVITY;
+        }
+
+        gameState.bobberY += gameState.bobberVelocity;
+
+        // Clamp position within fishing lane bounds
+        if (gameState.bobberY < BOBBER_MIN_Y) {
+          gameState.bobberY = BOBBER_MIN_Y;
+          gameState.bobberVelocity = 0;
+        }
+        if (gameState.bobberY > BOBBER_MAX_Y) {
+          gameState.bobberY = BOBBER_MAX_Y;
+          gameState.bobberVelocity = 0;
+        }
+
+        // Apply velocity damping for smooth movement
+        gameState.bobberVelocity *= 0.95;
+      };
+
+      // Fish AI Update Function
+      const updateFish = () => {
+        if (!gameState.currentFish) return;
+
+        // Random burst behavior (5% chance per frame)
+        if (Math.random() < 0.05 || gameState.fishBurstTimer > 0) {
+          if (gameState.fishBurstTimer <= 0) {
+            gameState.fishBurstTimer = 30; // 30 frames burst
+            gameState.fishTargetY = FISH_LANE_MIN_Y + Math.random() * (FISH_LANE_MAX_Y - FISH_LANE_MIN_Y);
+            // Apply screen shake when burst starts
+            applyScreenShake(8);
+          }
+          gameState.fishBurstTimer--;
+          
+          // Accelerate movement during burst window
+          const burstSpeed = FISH_BASE_SPEED * BURST_SPEED_MULTIPLIER * gameState.difficulty * gameState.currentFish.baseSpeed;
+          const direction = gameState.fishTargetY - gameState.fishY;
+          gameState.fishVelocity = Math.sign(direction) * Math.min(Math.abs(direction), burstSpeed);
+        } else {
+          // Smooth movement with sine wave interpolation
+          const currentTime = Date.now();
+
+          // Use sine wave for natural movement pattern
+          const sineOffset = Math.sin(currentTime / 1000) * 100;
+          gameState.fishTargetY = 300 + sineOffset;
+
+          // Smooth interpolation toward target
+          const speed = FISH_BASE_SPEED * gameState.difficulty * gameState.currentFish.baseSpeed;
+          const direction = gameState.fishTargetY - gameState.fishY;
+          gameState.fishVelocity = Math.sign(direction) * Math.min(Math.abs(direction), speed);
+        }
+
+        gameState.fishY += gameState.fishVelocity;
+
+        // Keep fish within fishing lane bounds
+        if (gameState.fishY < FISH_LANE_MIN_Y) {
+          gameState.fishY = FISH_LANE_MIN_Y;
+          gameState.fishVelocity = 0;
+        }
+        if (gameState.fishY > FISH_LANE_MAX_Y) {
+          gameState.fishY = FISH_LANE_MAX_Y;
+          gameState.fishVelocity = 0;
+        }
+
+        // Apply velocity damping
+        gameState.fishVelocity *= 0.98;
+      };
+
+      // Overlap Detection Function
+      const checkOverlap = () => {
+        return Math.abs(gameState.bobberY - gameState.fishY) < OVERLAP_THRESHOLD;
+      };
+
+      // Catch Meter Update Function
+      const updateCatchMeter = (deltaSeconds) => {
+        const isOverlapping = checkOverlap();
+
+        if (isOverlapping) {
+          gameState.catchMeter += CATCH_METER_FILL_RATE * gameState.difficulty;
+          if (gameState.catchMeter >= 100) {
+            gameState.catchMeter = 100;
+            onFishCaught();
+          }
+          // Reset zero timer when meter is above 0
+          gameState.catchMeterZeroTimer = 0;
+        } else {
+          gameState.catchMeter -= CATCH_METER_DRAIN_RATE * gameState.difficulty;
+          if (gameState.catchMeter < 0) {
+            gameState.catchMeter = 0;
+          }
+          
+          // Track how long the meter has been at 0
+          if (gameState.catchMeter === 0 && gameState.phase === 'playing') {
+            gameState.catchMeterZeroTimer += deltaSeconds;
+            // Trigger lose condition after 3 seconds at 0
+            if (gameState.catchMeterZeroTimer >= 3.0) {
+              onGameOver();
+            }
+          } else {
+            // Reset timer when meter goes above 0
+            gameState.catchMeterZeroTimer = 0;
+          }
+        }
+      };
+
+      // Timer Update Function
+      const updateTimer = (deltaSeconds) => {
+        gameState.timer -= deltaSeconds;
+        if (gameState.timer < 0) {
+          gameState.timer = 0;
+          onGameOver();
+        }
+        
+        if (timerValue) {
+          timerValue.textContent = Math.ceil(gameState.timer);
+        }
+      };
+
+      // Win/Lose Condition Handlers
+      const onFishCaught = () => {
+        if (!gameState.currentFish) return;
+
+        gameState.fishCaught++;
+        gameState.score += gameState.currentFish.pointValue * Math.floor(gameState.difficulty);
+        gameState.catchMeter = 0;
+
+        // Time bonus for rare catches
+        let bonusTime = 0;
+        switch (gameState.currentFish.rarity) {
+          case 'uncommon': bonusTime = 1; break;
+          case 'rare': bonusTime = 2; break;
+          case 'epic': bonusTime = 3; break;
+          case 'legendary': bonusTime = 5; break;
+          case 'mythic': bonusTime = 8; break;
+        }
+        gameState.timer = Math.min(gameState.timer + bonusTime, MAX_TIME);
+
+        // Play catch sound
+        playSound('catchSound', CATCH_VOLUME);
+
+        // Spawn catch particles
+        const fishX = 400;
+        spawnCatchParticles(fishX, gameState.fishY, gameState.currentFish.color);
+
+        // Update UI
+        if (scoreValue) {
+          scoreValue.textContent = gameState.score;
+        }
+        if (fishCount) {
+          fishCount.textContent = gameState.fishCaught;
+        }
+
+        // Select new fish type
+        gameState.currentFish = selectRandomFish();
+
+        // Respawn new fish
+        gameState.fishY = FISH_LANE_MIN_Y + Math.random() * (FISH_LANE_MAX_Y - FISH_LANE_MIN_Y);
+        gameState.fishTargetY = gameState.fishY;
+        gameState.fishVelocity = 0;
+
+        // Increase difficulty (linear progression, capped at MAX_DIFFICULTY)
+        gameState.difficulty = 1.0 + (gameState.fishCaught * DIFFICULTY_PER_CATCH);
+        gameState.difficulty = Math.min(gameState.difficulty, MAX_DIFFICULTY);
+
+        // Update difficulty display
+        const difficultyValue = document.getElementById('difficultyValue');
+        if (difficultyValue) {
+          difficultyValue.textContent = gameState.difficulty.toFixed(1) + 'x';
+        }
+
+        // Update high score
+        updateHighScore();
+
+        // Accessibility: Announce fish caught
+        if (canvas.getAttribute('aria-label')) {
+          console.log('Fish caught!');
+        }
+      };
+
+      const onGameOver = () => {
+        gameState.phase = 'lost';
+        
+        // Play escape sound
+        playSound('escapeSound', ESCAPE_VOLUME);
+
+        // Stop reel sound
+        const reelSound = document.getElementById('reelSound');
+        if (reelSound) {
+          try {
+            reelSound.pause();
+            reelSound.currentTime = 0;
+            gameState.reelSoundPlaying = false;
+          } catch (e) {
+            console.warn('Error stopping reel sound:', e);
+          }
+        }
+
+        // Update high score one final time
+        updateHighScore();
+
+        // Update UI
+        if (startButton) {
+          startButton.textContent = 'Play Again';
+          startButton.style.display = 'block';
+        }
+
+        // Reset difficulty
+        gameState.difficulty = 1.0;
+        
+        // Reset lastFrameTime for next game
+        gameState.lastFrameTime = 0;
+
+        // Cancel animation frame (render() will display game over screen automatically)
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        // Accessibility: Announce game over
+        console.log('Game over! Final score: ' + gameState.score);
+      };
+
+      // Rendering Helper Functions
+      const renderGameOverOverlay = (ctx) => {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over', canvasWidth / 2, canvasHeight / 2 - 40);
+        ctx.font = '24px sans-serif';
+        ctx.fillText('Final Score: ' + gameState.score, canvasWidth / 2, canvasHeight / 2 + 20);
+        const wasNewHighScore = gameState.score === gameState.highScore && gameState.score > 0;
+        if (wasNewHighScore) {
+          ctx.fillStyle = '#FFD700';
+          ctx.font = 'bold 28px sans-serif';
+          ctx.fillText('NEW HIGH SCORE!', canvasWidth / 2, canvasHeight / 2 + 70);
+        }
+        ctx.restore();
+      };
+
+      const renderRarityBadge = (ctx, fishX, fishY, rarity) => {
+        if (!rarity) return;
+        
+        ctx.save();
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = 'black';
+        
+        const rarityText = rarity.toUpperCase();
+        
+        if (rarity === 'mythic') {
+          const textGradient = createMythicGradient(ctx, fishX - 50, fishY - 50, fishX + 50, fishY - 50);
+          ctx.fillStyle = textGradient;
+          ctx.fillText(rarityText, fishX, fishY - 50);
+        } else {
+          ctx.fillStyle = getRarityTextColor(rarity);
+          ctx.fillText(rarityText, fishX, fishY - 50);
+        }
+        
+        ctx.restore();
+      };
+
+      const renderFish = (ctx, isOverlapping) => {
+        ctx.save();
+        
+        // Apply rarity glow
+        if (gameState.currentFish) {
+          const glow = getRarityGlow(gameState.currentFish.rarity, isOverlapping);
+          ctx.shadowBlur = glow.blur;
+          ctx.shadowColor = glow.color;
+          
+          // Special case for mythic: create gradient (stored but not directly used for shadow)
+          if (gameState.currentFish.rarity === 'mythic') {
+            const gradient = createMythicGradient(ctx, 350, gameState.fishY - 40, 450, gameState.fishY + 40);
+            // Note: gradient is created but shadow is still applied
+          }
+        } else if (isOverlapping) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#FFD700';
+        }
+        
+        const fishX = 400;
+        const baseSize = { width: 60, height: 30 };
+        const fishSize = gameState.currentFish ? {
+          width: baseSize.width * gameState.currentFish.size,
+          height: baseSize.height * gameState.currentFish.size
+        } : baseSize;
+        
+        // Fish body (ellipse)
+        ctx.fillStyle = gameState.currentFish ? gameState.currentFish.color : '#4A90E2';
+        ctx.beginPath();
+        ctx.ellipse(fishX, gameState.fishY, fishSize.width / 2, fishSize.height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fish eye
+        const fishSizeMultiplier = gameState.currentFish ? gameState.currentFish.size : 1;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(fishX + 15 * fishSizeMultiplier, gameState.fishY - 5 * fishSizeMultiplier, 5 * fishSizeMultiplier, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(fishX + 15 * fishSizeMultiplier, gameState.fishY - 5 * fishSizeMultiplier, 3 * fishSizeMultiplier, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fish tail fin
+        ctx.fillStyle = gameState.currentFish ? gameState.currentFish.accentColor : '#2E5C8A';
+        const tailSize = gameState.currentFish ? gameState.currentFish.size : 1;
+        ctx.beginPath();
+        ctx.moveTo(fishX - 30 * tailSize, gameState.fishY);
+        ctx.lineTo(fishX - 45 * tailSize, gameState.fishY - 15 * tailSize);
+        ctx.lineTo(fishX - 45 * tailSize, gameState.fishY + 15 * tailSize);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+
+        // Draw rarity badge above fish
+        if (gameState.currentFish) {
+          renderRarityBadge(ctx, fishX, gameState.fishY, gameState.currentFish.rarity);
+        }
+      };
+
+      const renderBobber = (ctx, isOverlapping) => {
+        ctx.save();
+        if (isOverlapping) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#FF6B6B';
+        }
+
+        const bobberX = 400;
+        const bobberWidth = 80;
+        const bobberHeight = 20;
+
+        // Bobber bar with rounded ends
+        ctx.fillStyle = '#FF6B6B';
+        ctx.beginPath();
+        ctx.arc(bobberX - bobberWidth / 2 + bobberHeight / 2, gameState.bobberY, bobberHeight / 2, Math.PI / 2, Math.PI * 1.5);
+        ctx.arc(bobberX + bobberWidth / 2 - bobberHeight / 2, gameState.bobberY, bobberHeight / 2, Math.PI * 1.5, Math.PI / 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hook visual below bar
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bobberX, gameState.bobberY + bobberHeight / 2);
+        ctx.lineTo(bobberX, gameState.bobberY + bobberHeight / 2 + 10);
+        ctx.lineTo(bobberX + 5, gameState.bobberY + bobberHeight / 2 + 8);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Draw connecting line when overlapping
+        if (isOverlapping) {
+          ctx.save();
+          ctx.strokeStyle = '#FFD700';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.moveTo(bobberX, gameState.bobberY);
+          ctx.lineTo(400, gameState.fishY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+      };
+
+      const renderCatchMeter = (ctx) => {
+        const meterX = 480;
+        const meterY = 100;
+        const meterWidth = 20;
+        const meterHeight = 400;
+
+        // Visual feedback when meter is low (near empty)
+        const isMeterLow = gameState.catchMeter < 20;
+
+        // Background bar
+        ctx.save();
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(meterX, meterY, meterWidth, meterHeight);
+
+        // Flash effect when meter is low
+        if (isMeterLow && gameState.phase === 'playing') {
+          const flashIntensity = (20 - gameState.catchMeter) / 20;
+          ctx.fillStyle = `rgba(255, 0, 0, ${0.3 * flashIntensity})`;
+          ctx.fillRect(meterX, meterY, meterWidth, meterHeight);
+        }
+
+        // Filled portion with rarity-based color coding
+        const fillHeight = (gameState.catchMeter / 100) * meterHeight;
+        const rarity = gameState.currentFish ? gameState.currentFish.rarity : 'common';
+        const gradient = getCatchMeterGradient(ctx, rarity, meterX, meterY, meterHeight, fillHeight);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(meterX, meterY + meterHeight - fillHeight, meterWidth, fillHeight);
+
+        // Border
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(meterX, meterY, meterWidth, meterHeight);
+
+        // Percentage text label
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(Math.round(gameState.catchMeter) + '%', meterX + meterWidth / 2, meterY + meterHeight + 15);
+        
+        ctx.restore();
+      };
+
+      // Rendering Function
+      const render = () => {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Render game over screen if phase is 'lost'
+        if (gameState.phase === 'lost') {
+          renderGameOverOverlay(ctx);
+          return;
+        }
+
+        // Apply screen shake if active
+        ctx.save();
+        if (gameState.screenShake > 0.5) {
+          const offsetX = (Math.random() - 0.5) * gameState.screenShake;
+          const offsetY = (Math.random() - 0.5) * gameState.screenShake;
+          ctx.translate(offsetX, offsetY);
+          gameState.screenShake *= SCREEN_SHAKE_DECAY; // screen shake decay
+        }
+
+        const scale = getScaleFactor();
+
+        // 1. Fishing Lane Background
+        ctx.save();
+        ctx.fillStyle = 'rgba(70, 130, 180, 0.3)';
+        ctx.fillRect(349, 100, 101, 400);
+
+        // Draw lane borders
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(350, 100, 100, 400);
+        ctx.restore();
+
+        const isOverlapping = checkOverlap();
+
+        // Render particles first (behind fish)
+        renderParticles();
+
+        // 2. Fish Marker
+        renderFish(ctx, isOverlapping);
+
+        // 3. Bobber Bar
+        renderBobber(ctx, isOverlapping);
+
+        // 4. Catch Meter
+        renderCatchMeter(ctx);
+
+        // Restore screen shake transform
+        ctx.restore();
+      };
+
+      // Game Loop Function
+      const gameLoop = (timestamp) => {
+        if (gameState.phase === 'playing') {
+          // Calculate delta time for frame-rate independent updates
+          const deltaSeconds = gameState.lastFrameTime > 0 
+            ? (timestamp - gameState.lastFrameTime) / 1000 
+            : 0.016; // Default to ~60fps on first frame
+          gameState.lastFrameTime = timestamp;
+
+          updateBobber();
+          updateFish();
+          updateCatchMeter(deltaSeconds);
+          updateTimer(deltaSeconds);
+          updateParticles();
+
+          // Handle reel sound based on overlap
+          const isOverlapping = checkOverlap();
+          const reelSound = document.getElementById('reelSound');
+          if (reelSound) {
+            try {
+              if (isOverlapping && !gameState.reelSoundPlaying) {
+                reelSound.volume = REEL_VOLUME;
+                reelSound.play().catch(() => {
+                  // Silently handle autoplay restrictions
+                });
+                gameState.reelSoundPlaying = true;
+              } else if (!isOverlapping && gameState.reelSoundPlaying) {
+                reelSound.pause();
+                reelSound.currentTime = 0;
+                gameState.reelSoundPlaying = false;
+              }
+            } catch (e) {
+              console.warn('Error handling reel sound:', e);
+            }
+          }
+
+          render();
+
+          animationId = requestAnimationFrame(gameLoop);
+        }
+      };
+
+      // Start Button Handler
+      const handleStartButton = () => {
+        // Reset all game state values
+        gameState.bobberY = 300;
+        gameState.bobberVelocity = 0;
+        gameState.fishY = FISH_LANE_MIN_Y + Math.random() * (FISH_LANE_MAX_Y - FISH_LANE_MIN_Y);
+        gameState.fishTargetY = gameState.fishY;
+        gameState.fishVelocity = 0;
+        gameState.catchMeter = 0;
+        gameState.timer = MAX_TIME;
+        gameState.score = 0;
+        gameState.fishCaught = 0;
+        gameState.inputActive = false;
+        gameState.difficulty = 1.0;
+        gameState.lastFrameTime = 0;
+        gameState.fishBurstTimer = 0;
+        gameState.phase = 'playing';
+        gameState.particles = [];
+        gameState.screenShake = 0;
+        gameState.reelSoundPlaying = false;
+        gameState.catchMeterZeroTimer = 0;
+
+        // Select initial fish type
+        gameState.currentFish = selectRandomFish();
+
+        // Play cast sound
+        playSound('castSound', CAST_VOLUME);
+
+        // Update UI
+        if (startButton) {
+          startButton.style.display = 'none';
+        }
+        if (scoreValue) {
+          scoreValue.textContent = '0';
+        }
+        if (timerValue) {
+          timerValue.textContent = String(MAX_TIME);
+        }
+        if (fishCount) {
+          fishCount.textContent = '0';
+        }
+        const difficultyValue = document.getElementById('difficultyValue');
+        if (difficultyValue) {
+          difficultyValue.textContent = '1.0x';
+        }
+
+        // Stop reel sound if playing
+        const reelSound = document.getElementById('reelSound');
+        if (reelSound) {
+          try {
+            reelSound.pause();
+            reelSound.currentTime = 0;
+          } catch (e) {
+            console.warn('Error stopping reel sound:', e);
+          }
+        }
+
+        // Focus canvas for keyboard input
+        canvas.focus();
+
+        // Start game loop (lastFrameTime will be initialized in first frame)
+        animationId = requestAnimationFrame(gameLoop);
+
+        // Accessibility: Announce game started
+        console.log('Game started!');
+      };
+
+      // Initialization
+      const init = () => {
+        try {
+          // Load high score from localStorage
+          gameState.highScore = loadHighScore();
+          const highScoreValue = document.getElementById('highScoreValue');
+          if (highScoreValue) {
+            highScoreValue.textContent = gameState.highScore;
+          }
+
+          // Set up event listeners
+          setupInputListeners();
+
+          // Attach start button handler
+          if (startButton) {
+            startButton.addEventListener('click', handleStartButton);
+          }
+
+          // Prepare initial game state
+          gameState.phase = 'idle';
+          gameState.bobberY = 300;
+          gameState.fishY = FISH_LANE_MIN_Y + Math.random() * (FISH_LANE_MAX_Y - FISH_LANE_MIN_Y);
+          gameState.fishTargetY = gameState.fishY;
+          gameState.currentFish = selectRandomFish();
+
+          // Ensure start button is visible
+          if (startButton) {
+            startButton.style.display = 'block';
+          }
+
+          // Initial render
+          render();
+        } catch (error) {
+          console.error('Error initializing game:', error);
+        }
+      };
+
+      // Initialize when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+      // Cleanup function (if needed for page navigation)
+      window.addEventListener('beforeunload', () => {
+        removeInputListeners();
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      });
+    })();
+  </script>
+
+  <audio id="bgMusic" src="good-night-lofi-cozy-chill-music-160166.mp3" loop preload="auto"></audio>
+  <audio id="castSound" src="cast.mp3" preload="auto"></audio>
+  <audio id="catchSound" src="catch.mp3" preload="auto"></audio>
+  <audio id="escapeSound" src="escape.mp3" preload="auto"></audio>
+  <audio id="reelSound" src="reel.mp3" preload="auto" loop></audio>
+  <button id="musicToggle" aria-label="Play music" aria-pressed="false">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <g class="icon-play">
+        <path d="M8 5v14l11-7z"/>
+      </g>
+      <g class="icon-pause">
+        <rect x="6" y="4" width="4" height="16" rx="1"/>
+        <rect x="14" y="4" width="4" height="16" rx="1"/>
+      </g>
+    </svg>
+  </button>
+</body>
+</html>
+
